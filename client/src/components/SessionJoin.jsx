@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-export default function SessionJoin({ onJoin }) {
+export default function SessionJoin({ onJoin, errorMessage, joining }) {
   const [roomId, setRoomId] = useState("");
   const [role, setRole] = useState("tracker");
 
@@ -19,9 +19,11 @@ export default function SessionJoin({ onJoin }) {
         <option value="tracked">Tracked</option>
       </select>
 
-      <button onClick={() => onJoin(roomId, role)}>
-        Join Session
+      <button onClick={() => onJoin(roomId, role)} disabled={joining}>
+        {joining ? "Joining..." : "Join Session"}
       </button>
+
+      {errorMessage && <p>{errorMessage}</p>}
     </div>
   );
 }

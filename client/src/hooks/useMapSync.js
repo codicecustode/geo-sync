@@ -12,11 +12,6 @@ export default function useMapSync(mapAdapter, role, roomId, setHud) {
   const socket = useSocket();
 
   useEffect(() => {
-    if (!socket || !role || !roomId) return;
-    socket.emit("join_session", { roomId, role });
-  }, [socket, role, roomId]);
-
-  useEffect(() => {
     if (!socket || !mapAdapter || !role || !roomId) return;
 
     let sendMove;
@@ -65,6 +60,12 @@ export default function useMapSync(mapAdapter, role, roomId, setHud) {
 
     socket.on("connection_status", handleConnectionStatus);
 
+    const handleTrackerTaken = () => {
+      setHud((p) => ({ ...p, status: "Tracker already exists" }));
+    };
+
+    socket.on("tracker_taken", handleTrackerTaken);
+
     const handleDisconnect = () => {
       setHud((p) => ({ ...p, status: "Tracker Left" }));
     };
@@ -74,6 +75,7 @@ export default function useMapSync(mapAdapter, role, roomId, setHud) {
     return () => {
       socket.off("sync_map", handleSync);
       socket.off("connection_status", handleConnectionStatus);
+      socket.off("tracker_taken", handleTrackerTaken);
       socket.off("tracker_disconnected", handleDisconnect);
 
       if (sendMove) {

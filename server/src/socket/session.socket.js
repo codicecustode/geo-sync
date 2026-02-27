@@ -12,10 +12,32 @@ const socketHandler = (io) => {
         role
       });
 
+      if (role === "tracker") {
+        const roomSockets = io.sockets.adapter.rooms.get(roomId) || new Set();
+        const hasExistingTracker = [...roomSockets].some((id) => {
+          const existingSocket = io.sockets.sockets.get(id);
+          return existingSocket?.data?.role === "tracker";
+        });
+
+        if (hasExistingTracker) {
+          console.log("JOIN REJECTED: tracker already exists", {
+            socketId: socket.id,
+            roomId,
+          });
+          socket.emit("tracker_taken", {
+            message: "Tracker already exists in this room",
+            roomId,
+          });
+          return;
+        }
+      }
+
       socket.join(roomId);
 
       socket.data.role = role;
       socket.data.roomId = roomId;
+
+      socket.emit("join_accepted", { roomId, role });
 
       console.log("JOINED ROOM:", {
         socketId: socket.id,

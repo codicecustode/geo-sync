@@ -1,6 +1,12 @@
 import { useEffect } from "react";
-import debounce from "lodash/debounce";
+import throttle from "lodash/throttle";
 import { useSocket } from "../context/SocketContext";
+
+const EMIT_INTERVAL_MS = 60;
+const MIN_LAT_LNG_DELTA = 0.000001;
+const MIN_ZOOM_DELTA = 0.01;
+const COORD_PRECISION = 7;
+const ZOOM_PRECISION = 4;
 
 export default function useMapSync(mapAdapter, role, roomId, setHud) {
   const socket = useSocket();
@@ -16,20 +22,30 @@ export default function useMapSync(mapAdapter, role, roomId, setHud) {
     let sendMove;
 
     if (role === "tracker") {
-      sendMove = debounce(() => {
+      let lastEmitted = null;
+
+      sendMove = throttle(() => {
         const center = mapAdapter.getCenter();
-        let lng = center.lng;
-        lng = ((lng + 180) % 360 + 360) % 360 - 180;
 
         const data = {
-          lat: center.lat,
-          lng,
-          zoom: mapAdapter.getZoom(),
+          lat: Number(center.lat.toFixed(COORD_PRECISION)),
+          lng: Number(center.lng.toFixed(COORD_PRECISION)),
+          zoom: Number(mapAdapter.getZoom().toFixed(ZOOM_PRECISION)),
         };
 
-        socket.emit("map_move", data);
         setHud({ ...data, status: "Connected" });
-      }, 40);
+
+        const shouldEmit =
+          !lastEmitted ||
+          Math.abs(data.lat - lastEmitted.lat) >= MIN_LAT_LNG_DELTA ||
+          Math.abs(data.lng - lastEmitted.lng) >= MIN_LAT_LNG_DELTA ||
+          Math.abs(data.zoom - lastEmitted.zoom) >= MIN_ZOOM_DELTA;
+
+        if (shouldEmit) {
+          socket.volatile.emit("map_move", data);
+          lastEmitted = data;
+        }
+      }, EMIT_INTERVAL_MS, { leading: true, trailing: true });
 
       mapAdapter.onMove(sendMove);
     }
@@ -43,6 +59,12 @@ export default function useMapSync(mapAdapter, role, roomId, setHud) {
 
     socket.on("sync_map", handleSync);
 
+    const handleConnectionStatus = (status) => {
+      setHud((p) => ({ ...p, status: status || "Connected" }));
+    };
+
+    socket.on("connection_status", handleConnectionStatus);
+
     const handleDisconnect = () => {
       setHud((p) => ({ ...p, status: "Tracker Left" }));
     };
@@ -51,6 +73,7 @@ export default function useMapSync(mapAdapter, role, roomId, setHud) {
 
     return () => {
       socket.off("sync_map", handleSync);
+      socket.off("connection_status", handleConnectionStatus);
       socket.off("tracker_disconnected", handleDisconnect);
 
       if (sendMove) {

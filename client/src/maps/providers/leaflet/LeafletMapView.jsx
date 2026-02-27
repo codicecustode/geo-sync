@@ -49,30 +49,56 @@ function MapReady({ onReady }) {
 }
 
 export default function LeafletMapView({ onReady, hud, role }) {
-  const [smoothPos, setSmoothPos] = useState(null);
+  const isTrackedWithoutTracker =
+    role === "tracked" && hud?.status === "Tracker Left";
+
+  const [smoothPos, setSmoothPos] = useState(() =>
+    hud?.lat == null || hud?.lng == null ? null : [hud.lat, hud.lng]
+  );
   const animationRef = useRef(null);
+  const smoothPosRef = useRef(
+    hud?.lat == null || hud?.lng == null ? null : [hud.lat, hud.lng]
+  );
+
+  const normalizeToReferenceLng = (lng, referenceLng) => {
+    let normalized = lng;
+    let delta = normalized - referenceLng;
+
+    if (delta > 180) normalized -= 360;
+    if (delta < -180) normalized += 360;
+
+    return normalized;
+  };
 
   useEffect(() => {
     if (hud?.lat == null || hud?.lng == null) return;
 
     const target = [hud.lat, hud.lng];
 
-    if (!smoothPos) {
-      setSmoothPos(target);
-      return;
+    if (!smoothPosRef.current) {
+      smoothPosRef.current = target;
     }
 
-    const start = smoothPos;
+    const start = smoothPosRef.current;
     const duration = role === "tracker" ? 150 : 250;
     const startTime = performance.now();
+
+    let targetLng = target[1];
+    let deltaLng = targetLng - start[1];
+
+    if (deltaLng > 180) targetLng -= 360;
+    if (deltaLng < -180) targetLng += 360;
 
     const animate = (time) => {
       const progress = Math.min((time - startTime) / duration, 1);
 
       const lat = start[0] + (target[0] - start[0]) * progress;
-      const lng = start[1] + (target[1] - start[1]) * progress;
+      const lng = start[1] + (targetLng - start[1]) * progress;
 
-      setSmoothPos([lat, lng]);
+      const nextPos = [lat, lng];
+      smoothPosRef.current = nextPos;
+
+      setSmoothPos(nextPos);
 
       if (progress < 1) {
         animationRef.current = requestAnimationFrame(animate);
@@ -82,12 +108,19 @@ export default function LeafletMapView({ onReady, hud, role }) {
     animationRef.current = requestAnimationFrame(animate);
 
     return () => cancelAnimationFrame(animationRef.current);
-  }, [hud.lat, hud.lng, role, smoothPos]);
+  }, [hud.lat, hud.lng, role]);
 
   return (
     <MapContainer
-      center={[28.6139, 77.209]}
-      zoom={3}
+      center={[hud.lat??28.6139, hud.lng??77.209]}
+      zoom={hud.zoom??3}
+      worldCopyJump={true}
+      dragging={!isTrackedWithoutTracker}
+      touchZoom={!isTrackedWithoutTracker}
+      scrollWheelZoom={!isTrackedWithoutTracker}
+      doubleClickZoom={!isTrackedWithoutTracker}
+      boxZoom={!isTrackedWithoutTracker}
+      keyboard={!isTrackedWithoutTracker}
       style={{ height: "100vh", width: "100%" }}
     >
       <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
@@ -96,7 +129,10 @@ export default function LeafletMapView({ onReady, hud, role }) {
 
       {smoothPos && (
         <Marker
-          position={smoothPos}
+          position={[
+            smoothPos[0],
+            normalizeToReferenceLng(smoothPos[1], hud?.lng ?? smoothPos[1]),
+          ]}
           icon={role === "tracker" ? trackerIcon : trackedIcon}
         >
           <Popup>

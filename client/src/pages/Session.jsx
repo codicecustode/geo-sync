@@ -14,9 +14,9 @@ export default function Session() {
   const [map, setMap] = useState(null);
 
   const [hud, setHud] = useState({
-    lat: 0,
-    lng: 0,
-    zoom: 0,
+    lat: 22.5937,
+    lng: 78.9629,
+    zoom: 4,
     status: "Searching",
   });
 

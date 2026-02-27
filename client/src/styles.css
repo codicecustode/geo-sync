@@ -89,7 +89,7 @@ body {
 }
 
 /* Mobile responsiveness */
-@media (max-width: 768px), (hover: none) and (pointer: coarse) {
+@media (max-width: 1100px), (hover: none) and (pointer: coarse) {
   .hud {
     top: auto;
     right: 10px;
@@ -102,6 +102,7 @@ body {
 
   .badge {
     left: 10px;
+    right: auto;
     bottom: calc(110px + env(safe-area-inset-bottom));
     padding: 8px 12px;
     font-size: 12px;

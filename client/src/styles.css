@@ -34,13 +34,25 @@ body {
 /* HUD */
 .hud {
   position: absolute;
-  top: 15px;
-  right: 15px;
-  background: rgba(0,0,0,0.75);
+  top: 16px;
+  right: 16px;
+  background: rgba(0,0,0,0.8);
   color: white;
   padding: 14px;
   border-radius: 10px;
   backdrop-filter: blur(6px);
+  z-index: 1000;
+  max-width: calc(100vw - 32px);
+  box-sizing: border-box;
+}
+
+.hud p {
+  margin: 0;
+  line-height: 1.35;
+}
+
+.hud p + p {
+  margin-top: 4px;
 }
 
 /* Role Badge */
@@ -52,6 +64,9 @@ body {
   border-radius: 20px;
   color: white;
   font-weight: bold;
+  z-index: 1000;
+  max-width: calc(100vw - 40px);
+  box-sizing: border-box;
 }
 
 .badge.tracker { background: #ff4d4d; }
@@ -60,8 +75,10 @@ body {
 /* Parent container */
 .app-container {
   position: relative;
-  height: 100vh;
+  min-height: 100vh;
+  min-height: 100dvh;
   width: 100%;
+  overflow: hidden;
 }
 
 /* Map must stay behind overlays */
@@ -71,31 +88,23 @@ body {
   z-index: 0;
 }
 
-/* HUD overlay */
-.hud {
-  position: absolute;
-  top: 20px;
-  right: 20px;
-  z-index: 1000;   /* ⭐ KEY FIX */
-  background: rgba(0,0,0,0.8);
-  color: white;
-  padding: 14px;
-  border-radius: 10px;
-  backdrop-filter: blur(6px);
-}
-
-/* Role badge */
-.badge {
-  position: absolute;
-  bottom: 20px;
-  left: 20px;
-  z-index: 1000;
-}
-
 /* Mobile responsiveness */
 @media (max-width: 768px) {
   .hud {
+    top: auto;
+    right: 10px;
+    left: 10px;
+    bottom: calc(10px + env(safe-area-inset-bottom));
     font-size: 12px;
-    padding: 10px;
+    padding: 10px 12px;
+    border-radius: 12px;
+  }
+
+  .badge {
+    left: 10px;
+    bottom: calc(110px + env(safe-area-inset-bottom));
+    padding: 8px 12px;
+    font-size: 12px;
+    border-radius: 14px;
   }
 }

@@ -24,6 +24,8 @@ export default function SessionJoin({ onJoin, errorMessage, joining }) {
       </button>
 
       {errorMessage && <p>{errorMessage}</p>}
+
+      <p className="author">Made by Aman Kumar Singh</p>
     </div>
   );
 }

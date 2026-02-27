@@ -27,7 +27,10 @@ export default function Session() {
   useEffect(() => {
     if (!socket) return;
 
-    const handleJoinAccepted = ({ roomId: acceptedRoomId, role: acceptedRole }) => {
+    const handleJoinAccepted = ({
+      roomId: acceptedRoomId,
+      role: acceptedRole,
+    }) => {
       setRoomId(acceptedRoomId);
       setRole(acceptedRole);
       setJoined(true);
@@ -69,7 +72,11 @@ export default function Session() {
 
   if (!joined) {
     return (
-      <SessionJoin onJoin={joinSession} errorMessage={joinError} joining={joining} />
+      <SessionJoin
+        onJoin={joinSession}
+        errorMessage={joinError}
+        joining={joining}
+      />
     );
   }
 
@@ -84,9 +91,10 @@ export default function Session() {
     <div className="app-container">
       <MapView onReady={setMap} hud={hud} role={role} />
 
-      {/* FLOATING OVERLAY */}
-      <HUD {...hud} />
-      <RoleBadge role={role} />
+      <div className="overlay">
+        <HUD {...hud} />
+        <RoleBadge role={role} />
+      </div>
     </div>
   );
 }

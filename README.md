@@ -47,7 +47,7 @@ npm install
 
 ### 3) Environment variables
 
-Create `client/.env`:
+Copy `client/.env.example` to `client/.env` and update as needed:
 
 ```env
 VITE_SOCKET_URL=http://localhost:5000
